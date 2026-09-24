@@ -1,0 +1,216 @@
+{
+  "info": {
+    "name": "AgriPortal Backend API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "farmId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "deviceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "deviceToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health Check",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/healthz"
+        }
+      }
+    },
+    {
+      "name": "1. Register Operator",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@agriportal.io\",\n  \"password\": \"SecurePassword123!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/register"
+        }
+      }
+    },
+    {
+      "name": "2. Login Operator",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"john@agriportal.io\",\n  \"password\": \"SecurePassword123!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login"
+        }
+      }
+    },
+    {
+      "name": "3. Create Farm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Green Valley Farm\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/farms"
+        }
+      }
+    },
+    {
+      "name": "4. List Farms",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/farms"
+        }
+      }
+    },
+    {
+      "name": "5. Provision Device Node (Returns Token Once)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Node 01\",\n  \"latitude\": 37.77,\n  \"longitude\": -122.42\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/farms/{{farmId}}/devices"
+        }
+      }
+    },
+    {
+      "name": "6. Ingest Telemetry (Device Auth)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-device-token",
+            "value": "{{deviceToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"recordedAt\": \"2026-09-23T10:00:55.050Z\",\n  \"payload\": {\n    \"temp\": 24.5,\n    \"humidity\": 62,\n    \"canopyTemp\": 22.1,\n    \"topsoilMoisture\": 31.4,\n    \"deepSoilMoisture\": 38,\n    \"leafWetness\": 0,\n    \"solarRadiation\": 780,\n    \"npkN\": 145,\n    \"npkP\": 50,\n    \"npkK\": 195,\n    \"batteryLevel\": 98\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/telemetry"
+        }
+      }
+    },
+    {
+      "name": "7. Query Telemetry (Cursor Paginated)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/telemetry?farmId={{farmId}}&take=20"
+        }
+      }
+    },
+    {
+      "name": "8. Check Capabilities (Sensor Badges)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}/capabilities"
+        }
+      }
+    },
+    {
+      "name": "9. Stream Export (CSV)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/export?farmId={{farmId}}&from=2026-09-01T00:00:00.000Z&to=2026-09-24T00:00:00.000Z&format=csv"
+        }
+      }
+    }
+  ]
+}
