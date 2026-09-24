@@ -1,0 +1,151 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                      String                  @id @default(uuid())
+  email                   String                  @unique
+  passwordHash            String
+  name                    String
+  memberships             FarmMember[]
+  notificationPreferences NotificationPreference[]
+  createdAt               DateTime                @default(now())
+}
+
+model Farm {
+  id        String       @id @default(uuid())
+  name      String
+  members   FarmMember[]
+  parcels   Parcel[]
+  devices   Device[]
+  rules     Rule[]
+  createdAt DateTime     @default(now())
+  deletedAt DateTime?
+}
+
+model FarmMember {
+  id        String   @id @default(uuid())
+  farmId    String
+  farm      Farm     @relation(fields: [farmId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  role      Role     @default(VIEWER)
+  invitedAt DateTime @default(now())
+
+  @@unique([farmId, userId])
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  VIEWER
+}
+
+model Parcel {
+  id        String    @id @default(uuid())
+  farmId    String
+  farm      Farm      @relation(fields: [farmId], references: [id])
+  name      String
+  cropType  String?
+  plantedAt DateTime?
+  devices   Device[]
+}
+
+model Device {
+  id          String      @id @default(uuid())
+  farmId      String
+  farm        Farm        @relation(fields: [farmId], references: [id])
+  parcelId    String?
+  parcel      Parcel?     @relation(fields: [parcelId], references: [id])
+  name        String
+  deviceToken String      @unique
+  lastSeenAt  DateTime?
+  status      String      @default("OFFLINE")
+  latitude    Float?
+  longitude   Float?
+  telemetry   Telemetry[]
+  createdAt   DateTime    @default(now())
+  deletedAt   DateTime?
+}
+
+model Telemetry {
+  id          BigInt       @id @default(autoincrement())
+  deviceId    String
+  device      Device       @relation(fields: [deviceId], references: [id])
+  recordedAt  DateTime
+  payload     Json
+  predictions Prediction[]
+
+  @@unique([deviceId, recordedAt])
+  @@index([payload], type: Gin)
+  @@index([deviceId, recordedAt])
+}
+
+model TelemetryRollup {
+  id          String   @id @default(uuid())
+  deviceId    String
+  bucketAt    DateTime
+  metricKey   String
+  avgValue    Float
+  minValue    Float
+  maxValue    Float
+  sampleCount Int
+
+  @@unique([deviceId, bucketAt, metricKey])
+  @@index([deviceId, bucketAt])
+}
+
+model Prediction {
+  id          String    @id @default(uuid())
+  telemetryId BigInt
+  telemetry   Telemetry @relation(fields: [telemetryId], references: [id])
+  type        String
+  value       Float
+  meta        Json?
+  createdAt   DateTime  @default(now())
+}
+
+model Rule {
+  id        String   @id @default(uuid())
+  farmId    String
+  farm      Farm     @relation(fields: [farmId], references: [id])
+  name      String
+  condition Json
+  action    Json
+  enabled   Boolean  @default(true)
+  alerts    Alert[]
+  createdAt DateTime @default(now())
+}
+
+model Alert {
+  id           String   @id @default(uuid())
+  ruleId       String?
+  rule         Rule?    @relation(fields: [ruleId], references: [id])
+  deviceId     String?
+  severity     Severity
+  message      String
+  acknowledged Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+enum Severity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model NotificationPreference {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  farmId      String
+  minSeverity Severity @default(WARNING)
+  channels    String[] @default(["IN_APP"])
+
+  @@unique([userId, farmId])
+}
